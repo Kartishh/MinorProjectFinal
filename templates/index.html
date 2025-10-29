@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Model Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="theme-color" content="#010409">
+</head>
+<body>
+    <div class="grid-background"></div>
+    <div class="container">
+        <div class="header">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+            </div>
+            <div class="title-section">
+                <h1><span class="prompt">$</span> AI Model Recommender</h1>
+                <p class="subtitle">Upload an image, get an intelligent model recommendation</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="upload-container">
+                    <div class="upload-box" id="uploadBox" tabindex="0">
+                        <div class="upload-icon-wrapper">
+                            <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <p class="upload-title">Drag & drop an image or click to browse</p>
+                        <p class="upload-desc">PNG, JPG, JPEG • Max 10 MB</p>
+                        <div class="file-info" id="fileInfo" style="display:none;"></div>
+                        <input type="file" name="image" id="imageInput" accept="image/png,image/jpeg,image/jpg" required>
+                    </div>
+
+                    <button type="submit" class="analyze-btn">
+                        <span>Analyze Image</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+            </form>
+
+            {% if result %}
+            <div class="results-section" style="margin-top:2rem;">
+                <div class="results-header">
+                    <div class="status-line">
+                        <div class="status-indicator"></div>
+                        <div class="status-text">ANALYSIS COMPLETE</div>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="image-container">
+                        <div class="image-label">UPLOADED IMAGE</div>
+                        <div class="image-wrapper">
+                            <img src="{{ image_url }}" alt="Uploaded image">
+                        </div>
+                    </div>
+
+                    <div class="metrics-container">
+                        <div class="metric-box">
+                            <div class="metric-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                COMPLEXITY SCORE
+                            </div>
+                            <div class="metric-value">{{ "%.4f"|format(entropy) }}</div>
+                            <div class="metric-bar"><div class="metric-fill" style="width: {{ entropy_bar }}%;"></div></div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                                RECOMMENDED MODEL
+                            </div>
+                            <div class="model-name">{{ model }}</div>
+                            <div class="model-badge">
+                                {% if model == 'Teacher Model' %}
+                                    <span class="badge high">QUALITY PRIORITY</span>
+                                {% else %}
+                                    <span class="badge low">EFFICIENCY PRIORITY</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-panel">
+                            <div class="info-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                EXPLANATION
+                            </div>
+                            <div class="info-text" id="explanation">{{ explanation }}</div>
+                        </div>
+
+                        <button class="reset-btn" onclick="window.location.href='/'">
+                            <span>Analyze Another Image</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <div class="footer-line"></div>
+            <p>Complexity Threshold: {{ threshold if threshold is defined else 0.6 }}</p>
+        </div>
+    </div>
+
+    <script>
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('imageInput');
+        const fileInfo = document.getElementById('fileInfo');
+
+        const activateDrag = (active) => {
+            uploadBox.classList.toggle('drag-active', active);
+        };
+
+        const setHasFile = (name) => {
+            uploadBox.classList.add('has-file');
+            fileInfo.style.display = 'inline-flex';
+            fileInfo.textContent = `Selected: ${name}`;
+        };
+
+        uploadBox.addEventListener('click', () => imageInput.click());
+        uploadBox.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') imageInput.click(); });
+        uploadBox.addEventListener('dragover', (e) => { e.preventDefault(); activateDrag(true); });
+        uploadBox.addEventListener('dragleave', () => activateDrag(false));
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            activateDrag(false);
+            if (e.dataTransfer.files.length) {
+                imageInput.files = e.dataTransfer.files;
+                setHasFile(e.dataTransfer.files[0].name);
+            }
+        });
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length) setHasFile(e.target.files[0].name);
+        });
+    </script>
+</body>
+</html>
